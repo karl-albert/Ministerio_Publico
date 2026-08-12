@@ -67,16 +67,16 @@ log = logging.getLogger(__name__)
 
 
 def baixar_pasta_drive(destino):
-    url = f"https://google.com{DRIVE_FOLDER_ID}"
-    log.info("Baixando pasta do Drive...")
+    url = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
+    log.info(f"Baixando pasta do Drive...")
     gdown.download_folder(url, output=destino, quiet=False, use_cookies=False)
     csvs = glob.glob(os.path.join(destino, "**", "*.csv"), recursive=True)
     return sorted(csvs)
 
 
 def processar_csv(caminho):
-    df = pd.read_csv(caminho, encoding="utf-8-sig", sep=";")
-    
+    df = pd.read_csv(caminho, encoding="utf-8", sep=",")
+
     colunas_presentes = [c for c in COLUNAS_SUPABASE if c in df.columns]
     df = df[colunas_presentes].copy()
 
@@ -90,7 +90,8 @@ def processar_csv(caminho):
 
     if "DATA" in df.columns:
         df["DATA"] = pd.to_datetime(df["DATA"], errors="coerce")
-        df["DATA"] = df["DATA"].dt.strftime("%Y-%m-%dT12:00:00+00:00")
+        df["DATA"] = df["DATA"].dt.tz_localize("America/Sao_Paulo", ambiguous="NaT")
+        df["DATA"] = df["DATA"].dt.strftime("%Y-%m-%dT%H:%M:%S%z")
 
     df = df.dropna(subset=["DATA"])
     df = df.where(pd.notnull(df), None)
@@ -116,13 +117,13 @@ def supabase_headers():
 
 def deletar_mes(ano_mes):
     ano, mes = ano_mes.split("-")
-    inicio = f"{ano}-{mes}-01T12:00:00+00:00"
+    inicio = f"{ano}-{mes}-01T00:00:00-03:00"
     m = int(mes)
     a = int(ano)
     if m == 12:
-        fim = f"{a+1}-01-01T12:00:00+00:00"
+        fim = f"{a+1}-01-01T00:00:00-03:00"
     else:
-        fim = f"{a}-{m+1:02d}-01T12:00:00+00:00"
+        fim = f"{a}-{m+1:02d}-01T00:00:00-03:00"
 
     delete_url = f"{REST_ENDPOINT}?DATA=gte.{inicio}&DATA=lt.{fim}"
     resp = requests.delete(delete_url, headers=supabase_headers())
