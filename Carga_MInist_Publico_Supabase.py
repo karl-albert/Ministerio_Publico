@@ -67,8 +67,8 @@ log = logging.getLogger(__name__)
 
 
 def baixar_pasta_drive(destino):
-    url = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
-    log.info(f"Baixando pasta do Drive...")
+    url = f"https://google.com{DRIVE_FOLDER_ID}"
+    log.info("Baixando pasta do Drive...")
     gdown.download_folder(url, output=destino, quiet=False, use_cookies=False)
     csvs = glob.glob(os.path.join(destino, "**", "*.csv"), recursive=True)
     return sorted(csvs)
@@ -105,6 +105,15 @@ def extrair_meses(df):
     return sorted(meses)
 
 
+def supabase_headers():
+    return {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+    }
+
+
 def deletar_mes(ano_mes):
     ano, mes = ano_mes.split("-")
     inicio = f"{ano}-{mes}-01T12:00:00+00:00"
@@ -124,8 +133,6 @@ def deletar_mes(ano_mes):
         raise RuntimeError(f"DELETE falhou: {resp.status_code}")
 
 
-
-
 def inserir_lote(registros):
     resp = requests.post(
         REST_ENDPOINT,
@@ -138,11 +145,7 @@ def inserir_lote(registros):
 
 
 def carregar_supabase(df):
-    def extrair_meses(df):
-    # Converte as datas tratadas em formato ISO para extrair o ano-mês corretamente
-    datas = pd.to_datetime(df["DATA"], errors="coerce", utc=True)
-    meses = datas.dt.strftime("%Y-%m").dropna().unique().tolist()
-    return sorted(meses)
+    meses = extrair_meses(df)
     log.info(f"  Meses no arquivo: {meses}")
 
     for mes in meses:
