@@ -20,19 +20,11 @@ jobs:
           python-version: '3.12'
 
       - name: Instalar dependências
-        run: pip install google-api-python-client google-auth pandas requests
-
-      - name: Criar arquivo da Service Account
-        run: echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}' > service_account.json
+        run: pip install gdown pandas requests
 
       - name: Executar carga
         env:
-          GOOGLE_SERVICE_ACCOUNT_JSON: service_account.json
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
         run: python Carga_MInist_Publico_Supabase.py --force
-
-      - name: Limpar credenciais
-        if: always()
-        run: rm -f service_account.json
