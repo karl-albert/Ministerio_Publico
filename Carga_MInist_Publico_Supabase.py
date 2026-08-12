@@ -1,4 +1,4 @@
-"""
+""
 Carga_MInist_Publico_Supabase.py
 ================================
 Sincroniza CSVs da pasta pública Google Drive "Ministerio_Publico"
