@@ -75,7 +75,6 @@ def baixar_pasta_drive(destino):
 
 
 def processar_csv(caminho):
-   
     df = pd.read_csv(caminho, encoding="utf-8-sig", sep=";")
     
     colunas_presentes = [c for c in COLUNAS_SUPABASE if c in df.columns]
@@ -89,10 +88,8 @@ def processar_csv(caminho):
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # ─── ALTERAÇÃO DA DATA AQUI ──────────────────────────────────────────────
     if "DATA" in df.columns:
         df["DATA"] = pd.to_datetime(df["DATA"], errors="coerce")
-        # Força a gravação de forma segura ao meio-dia UTC (+00:00)
         df["DATA"] = df["DATA"].dt.strftime("%Y-%m-%dT12:00:00+00:00")
 
     df = df.dropna(subset=["DATA"])
@@ -102,10 +99,14 @@ def processar_csv(caminho):
     return df
 
 
+def extrair_meses(df):
+    datas = pd.to_datetime(df["DATA"], errors="coerce", utc=True)
+    meses = datas.dt.strftime("%Y-%m").dropna().unique().tolist()
+    return sorted(meses)
+
+
 def deletar_mes(ano_mes):
     ano, mes = ano_mes.split("-")
-    # ─── ALTERAÇÃO DOS FILTROS DA DELEÇÃO AQUI ───────────────────────────────
-    # Ajustado para limpar usando a mesma lógica de meio-dia UTC
     inicio = f"{ano}-{mes}-01T12:00:00+00:00"
     m = int(mes)
     a = int(ano)
@@ -121,6 +122,7 @@ def deletar_mes(ano_mes):
     else:
         log.error(f"  Erro ao deletar {ano_mes}: {resp.status_code} - {resp.text}")
         raise RuntimeError(f"DELETE falhou: {resp.status_code}")
+
 
 
 
