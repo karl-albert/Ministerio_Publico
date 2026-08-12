@@ -75,8 +75,9 @@ def baixar_pasta_drive(destino):
 
 
 def processar_csv(caminho):
-    df = pd.read_csv(caminho, encoding="utf-8", sep=",")
-
+   
+    df = pd.read_csv(caminho, encoding="utf-8-sig", sep=";")
+    
     colunas_presentes = [c for c in COLUNAS_SUPABASE if c in df.columns]
     df = df[colunas_presentes].copy()
 
