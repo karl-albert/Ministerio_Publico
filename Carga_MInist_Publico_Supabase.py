@@ -136,7 +136,11 @@ def inserir_lote(registros):
 
 
 def carregar_supabase(df):
-    meses = extrair_meses(df)
+    def extrair_meses(df):
+    # Converte as datas tratadas em formato ISO para extrair o ano-mês corretamente
+    datas = pd.to_datetime(df["DATA"], errors="coerce", utc=True)
+    meses = datas.dt.strftime("%Y-%m").dropna().unique().tolist()
+    return sorted(meses)
     log.info(f"  Meses no arquivo: {meses}")
 
     for mes in meses:
