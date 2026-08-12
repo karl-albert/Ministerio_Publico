@@ -89,10 +89,11 @@ def processar_csv(caminho):
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
+    # ─── ALTERAÇÃO DA DATA AQUI ──────────────────────────────────────────────
     if "DATA" in df.columns:
         df["DATA"] = pd.to_datetime(df["DATA"], errors="coerce")
-        df["DATA"] = df["DATA"].dt.tz_localize("America/Sao_Paulo", ambiguous="NaT")
-        df["DATA"] = df["DATA"].dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+        # Força a gravação de forma segura ao meio-dia UTC (+00:00)
+        df["DATA"] = df["DATA"].dt.strftime("%Y-%m-%dT12:00:00+00:00")
 
     df = df.dropna(subset=["DATA"])
     df = df.where(pd.notnull(df), None)
@@ -101,30 +102,17 @@ def processar_csv(caminho):
     return df
 
 
-def extrair_meses(df):
-    datas = pd.to_datetime(df["DATA"], errors="coerce", utc=True)
-    meses = datas.dt.strftime("%Y-%m").dropna().unique().tolist()
-    return sorted(meses)
-
-
-def supabase_headers():
-    return {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json",
-        "Prefer": "return=minimal",
-    }
-
-
 def deletar_mes(ano_mes):
     ano, mes = ano_mes.split("-")
-    inicio = f"{ano}-{mes}-01T00:00:00-03:00"
+    # ─── ALTERAÇÃO DOS FILTROS DA DELEÇÃO AQUI ───────────────────────────────
+    # Ajustado para limpar usando a mesma lógica de meio-dia UTC
+    inicio = f"{ano}-{mes}-01T12:00:00+00:00"
     m = int(mes)
     a = int(ano)
     if m == 12:
-        fim = f"{a+1}-01-01T00:00:00-03:00"
+        fim = f"{a+1}-01-01T12:00:00+00:00"
     else:
-        fim = f"{a}-{m+1:02d}-01T00:00:00-03:00"
+        fim = f"{a}-{m+1:02d}-01T12:00:00+00:00"
 
     delete_url = f"{REST_ENDPOINT}?DATA=gte.{inicio}&DATA=lt.{fim}"
     resp = requests.delete(delete_url, headers=supabase_headers())
@@ -133,6 +121,7 @@ def deletar_mes(ano_mes):
     else:
         log.error(f"  Erro ao deletar {ano_mes}: {resp.status_code} - {resp.text}")
         raise RuntimeError(f"DELETE falhou: {resp.status_code}")
+
 
 
 def inserir_lote(registros):
