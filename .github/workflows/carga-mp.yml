@@ -3,7 +3,7 @@ name: Carga Ministerio Publico → Supabase
 on:
   schedule:
     # Roda todo dia às 21:30 horário de Brasília (00:30 UTC do dia seguinte)
-    - cron: '0 1 * * *'
+    - cron: '30 1 * * *'
     
   workflow_dispatch:  # Permite rodar manualmente pelo GitHub
 
